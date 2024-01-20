@@ -57,7 +57,7 @@ def main():
                 for yjaljella in range(muu["ykorkeus"]):
                     jaljella.append((xjaljella, yjaljella))
             miinoita(tila["kentta"], jaljella, muu["miina"])
-            h.lataa_kuvat("C:\\Ohjelmointi\\spritet")
+            h.lataa_kuvat(".\\spritet")
             h.luo_ikkuna(len(tila["kentta"][0])*40, len(tila["kentta"]*40))
             h.aseta_piirto_kasittelija(piirra_kentta)
             muu["lopetus"] = "Jäänyt kesken"
