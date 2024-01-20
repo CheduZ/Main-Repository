@@ -1,0 +1,178 @@
+# TKJ-harjoitustyö 2023 Fibonacci
+#
+# Tämä tiedosto on tarkoitettu toimimaan y86-64 Simulaattorilla. 
+# Käyttämäni simulaattori löytyy sivulta: https://boginw.github.io/js-y86-64/ 
+#
+#
+# Pohdinta:
+#
+# - ajankohtaisten käskyjen määrä numerolla 1 on 97 ja numerolla 987 käskyjä on 
+#   noin 8610. Tämä johtuu siitä, kun esim kertolaskun 5x * x loop käydään läpi
+#   x verran ja se tehdään mahdollisesti 2 kertaa. Ohjelmassa on myös 2 looppia
+#   jotka loopataan läpi sqrt(x) kertaa.
+#
+# - Aloin kirjoittamaan ohjelmaa ns. lopusta eli aloitin "perfect square"
+#   tarkistuksella annetulla numerolla ja siitä aloin laajentamaan laskemalla
+#   5*x*x+4 ja siitä 5*x*x-4 ja käytän sen arvoa aikaisemmin toimivassa
+#   ohjelmassa.
+#
+# - Optimoin koodia hieman uudelleenkäyttämällä looppeja. Ohjelmaa olisi ehkä
+#   voinut optimoida käyttämällä nopeampaa kertolaskua, mutta omasta mielestä
+#   ohjelma toimii annetuilla alle 1000 arvoilla tarpeeksi nopeasti.
+#
+# - Koodia olisi voinut lyhentää vähentämällä aluksi lasketusta arvosta 5*x*x+4 
+#   luku 8 eikä laskea arvoa uudestaan, mutta omasta mielestä koodia on helpompi
+#   muokata esim. jos laskussa toinen ehto olisikin 6*x*x-7 eikä 5*x*x-4, voin
+#   helposti muokata jälkimmäistä laskuria. 
+
+# Tästä alkaa koodi
+main:
+    irmovq $0, %r12  #vakio 0
+    irmovq $0, %rbp  # res
+    irmovq $1, %rdi  # vakio 1
+    irmovq $1, %r8   # Bit
+    irmovq $8, %r9  #vakio 8
+
+alkuloop:               # lasketaan arvo 5*x*x+4
+    mrmovq (%r11), %r13     # Lue arvo listasta
+    rrmovq %r13, %rsi       # kopioi arvo listasta
+    irmovq $0, %r10
+    subq %r13, %r10         # Vertaa lopetusmerkkiin
+    je end                  # lopetusmerkki --> loppu
+    irmovq $0, %r10
+    irmovq $0, %rdx     # alustetaan kertolaskun vastaus
+    irmovq $5, %rbx     # alustetaan laskuri(kerroin 5)
+    jmp kerto
+    
+#Lasketaan 5*x*x+4
+
+kerto:                      # Lasketaan 5*x
+    addq %rsi, %rdx
+    subq %rdi, %rbx
+    jg kerto
+    jmp nelio
+    
+nelio:
+    irmovq $0, %rbp         # alustetaan kertolaskun vastaus
+    rrmovq %rsi, %rbx       # alustetaan laskuri(kerroin nro)
+    jmp neliokerto
+    
+neliokerto:                 # Lasketaan 5*x*x
+    addq %rdx, %rbp
+    subq %rdi, %rbx
+    jg neliokerto
+    jmp plus
+    
+plus:                       # Lasketaan 5*x*x + 4
+    addq %rdi, %rbp
+    addq %rdi, %rbp
+    addq %rdi, %rbp
+    addq %rdi, %rbp
+    irmovq $1, %r14
+    jmp loop
+
+loop:
+    irmovq $1, %r8          # uudelleenalustetaan Bit
+    rrmovq %rbp, %r13
+    irmovq $0, %rbp         # nollataan %rbp
+    rrmovq %r13, %r10       # kopioi arvo listasta
+    jmp calculate_sqrt      # laskemaan sqrt
+    
+looploppu:
+
+    addq %r9, %r11
+    jmp alkuloop
+    
+#NELIÖJUURI
+calculate_sqrt:
+    subq %rbp, %r13
+    
+    jle end_sqrt         # Jos res >= num, hyppää lopetuksen suuntaan
+    addq %rdi, %rbp      # res += 1
+    subq %rbp, %r13      # num - res
+    addq %r8, %r8        # Bit <<= 1
+    addq %r8, %r8        # Bit <<= 1
+    jmp calculate_sqrt   # Hyppää laskemaan uutta neliöjuurta
+
+end_sqrt:
+    irmovq $0, %rcx      # Aseta rcx:n arvoksi 0
+    rrmovq %rbp, %rcx    # Kopioi res rcx:ään
+    jmp pyoristys
+    
+#Tarkistetaan pitääkö pyöristää alaspäin
+pyoristys:              
+    addq %rbp,%r13
+    subq %r12,%r13
+    jl pienempi
+    jmp suurempi
+pienempi:               # Pyöristetään alaspäin
+    subq %rdi,%rcx
+    jmp perfectstart
+suurempi:               # Ei tarvi pyöristää alaspäin
+    jmp perfectstart
+
+#PERFECT SQUARE TESTIT
+perfectstart:                   #   tarkistetaan onko perfect square
+    irmovq $0, %rdx             #   alustetaan kertolaskun vastaus 0
+    rrmovq %rcx, %rbx           #   alustetaan laskuri kertolaskuun
+    jmp kertolasku
+    
+kertolasku:                     # Lasketaan s*s (s=sqrt(x))
+    addq %rcx, %rdx
+    subq %rdi, %rbx
+    jg kertolasku
+    jmp perfect
+    
+perfect:
+    subq %r10,%rdx
+    je  looploppu           # on perfect square --> takaisin looppiin
+    jmp eiperfect           # ei perfect square --> Raxiin luku
+
+eiperfect:
+    rrmovq %rsi, %rax
+    jmp miinustesti
+
+#Miinuslaskuversio
+miinustesti:                # Testataan, ollanko jo kokeiltu laskea miinusversiolla
+    subq %r12, %r14         # (miinusversio = 5x^2 - 4)
+    jg miinusalku
+    jmp end
+
+#Lasketaan 5*x*x - 4
+miinusalku:
+    irmovq $0, %rdx         # alustetaan kertolaskun vastaus
+    irmovq $5, %rbx         # alustetaan laskuri(kerroin 5)
+    jmp kertomiinus
+    
+kertomiinus:                # Lasketaan 5*x
+    addq %rsi, %rdx
+    subq %rdi, %rbx
+    jg kertomiinus
+    jmp neliomiinus
+    
+neliomiinus:
+    irmovq $0, %rbp         # alustetaan kertolaskun vastaus
+    rrmovq %rsi, %rbx       # alustetaan laskuri(kerroin nro)
+    jmp neliokertomiinus
+    
+neliokertomiinus:           #lasketaan (5x)*x
+    addq %rdx, %rbp
+    subq %rdi, %rbx
+    jg neliokertomiinus
+    jmp miinus
+    
+miinus:                     # lasketaan 5x^2 - 4
+    subq %rdi, %rbp
+    subq %rdi, %rbp
+    subq %rdi, %rbp
+    subq %rdi, %rbp
+    irmovq $0, %r14
+    jmp loop
+
+end:
+    rrmovq %rsi, %rax       # Palautetaan ohjelman lopettanut numero %raxissa
+    halt
+    
+#Paikka arraylle
+.pos 0x700
+array:
