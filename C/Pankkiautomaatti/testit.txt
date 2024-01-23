@@ -1,0 +1,23 @@
+Virhe 1. Virhe syötettäessä kaksi numeroa eroteltuna välilyönnillä.
+Ohjelma ottaa ensimmäisen numeron valintana ja toisen seuraavana syötteenä.
+
+Esimerkissä tuloste siitä kun annetaan syötteeksi "1 20" jolloin "1" otetaan valintana
+mennä nostamaan rahaa ja "20" otetaan rahan noston summaksi jolloin syntyy näkyvä päällekkäisyys.
+
+Paavalikko:
+1. Rahan nostaminen
+2. Saldo
+3. Poistu
+Valitse toiminto: 1 20
+Valitsit rahan nostamisen
+Tilin saldo on: 1150 euroa
+Syota nostettava summa: 1 kpl 20 euron setelia
+Rahat nostettu: 20 euroa
+Tilin saldo on: 1130 euroa
+Paavalikko:
+1. Rahan nostaminen
+2. Saldo
+3. Poistu
+Valitse toiminto:
+
+En pystynyt korjaamaan virhettä.
